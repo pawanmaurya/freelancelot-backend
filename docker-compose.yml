@@ -1,0 +1,35 @@
+version: "3.9"
+
+
+services:
+  db:
+    image: postgres:15
+    container_name: postgres_db
+    restart: always
+    environment:
+      POSTGRES_USER: freelancelot
+      POSTGRES_PASSWORD: password123
+      POSTGRES_DB: freelancelot
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  fastapi:
+    build: .
+    container_name: fastapi_app
+    env_file:
+      - .env
+    depends_on:
+      - db
+    environment:
+      DATABASE_URL: postgresql://freelancelot:password123@db:5432/freelancelot
+    ports:
+      - "8000:8000"
+    command: ["./wait-for-it.sh", "db", "--","uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]
+
+
+
+volumes:
+  postgres_data:
+

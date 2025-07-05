@@ -3,8 +3,9 @@ import logging
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from model.job import Job
+import os
 
-DATABASE_URL = "postgresql://freelancelot:password@localhost:5432/freelancelot"
+DATABASE_URL = os.getenv("DATABASE_URL")
 
 engine = create_engine(DATABASE_URL)
 SessionLocal = sessionmaker(bind=engine)
