@@ -1,0 +1,12 @@
+.env
+scrapper_venv
+
+__pycache__/
+*.py[cod]
+*.so
+*.egg-info/
+*.log
+.env
+.venv/
+env/
+venv/
