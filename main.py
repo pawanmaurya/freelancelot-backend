@@ -43,7 +43,7 @@ async def ping():
 def startup_event():
     setup_logging()
     setup_database()
-    #start_scheduler()
+    start_scheduler()
 
 
 app.include_router(jobs.router, prefix="/api")
