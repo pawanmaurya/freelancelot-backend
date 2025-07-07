@@ -1,10 +1,13 @@
-from datetime import datetime
+from datetime import datetime, timedelta
 import logging
-from sqlalchemy import create_engine
+from sqlalchemy import create_engine, text
 from sqlalchemy.orm import sessionmaker
 from model.job import Job
+from model.filter import Filter, FilterKeyword, FilterCategory, Profile
 import os
 from dotenv import load_dotenv
+from sqlalchemy import and_
+from model.job_alert import JobAlert
 
 load_dotenv()
 
@@ -54,4 +57,65 @@ def save_jobs(jobs: list[dict]):
 def setup_database():
     # Create tables if they don't exist
     Job.metadata.create_all(engine)
+    JobAlert.metadata.create_all(engine)
     logging.info("[DB] Database setup complete")
+
+def get_latest_jobs(minutes=1000):
+    session = SessionLocal()
+    try:
+        since = datetime.utcnow() - timedelta(minutes=minutes)
+        jobs = session.query(Job).filter(Job.published_at >= since).all()
+        return [
+            {
+                "title": job.title,
+                "url": job.url,
+                "type": job.type,
+                "category": job.category,
+                "description": job.description,
+                "skills": job.skills.split(",") if job.skills else [],
+                "budget": float(job.budget) if job.budget is not None else 0,
+                "location": job.location,
+                "client_spend": job.client_spend,
+                "client_rating": job.client_rating,
+                "published_at": job.published_at,
+            }
+            for job in jobs
+        ]
+    finally:
+        session.close()
+
+def log_job_alert(user_id, job_id):
+    session = SessionLocal()
+    try:
+        session.execute(
+            text("INSERT INTO job_alerts (user_id, job_id) VALUES (:user_id, :job_id)"),
+            {"user_id": user_id, "job_id": job_id}
+        )
+        session.commit()
+    finally:
+        session.close()
+
+def has_alert_been_sent(user_id, job_id):
+    session = SessionLocal()
+    try:
+        result = session.execute(
+            text("SELECT 1 FROM job_alerts WHERE user_id = :user_id AND job_id = :job_id"),
+            {"user_id": user_id, "job_id": job_id}
+        ).fetchone()
+        return result is not None
+    finally:
+        session.close()
+
+def alert_count_last_hour(user_id):
+    session = SessionLocal()
+    try:
+        result = session.execute(
+            text("""
+            SELECT COUNT(*) FROM job_alerts
+            WHERE user_id = :user_id AND sent_at > NOW() - INTERVAL '1 hour'
+            """),
+            {"user_id": user_id}
+        ).scalar()
+        return result
+    finally:
+        session.close()
