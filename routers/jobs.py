@@ -1,6 +1,6 @@
 from fastapi import APIRouter, HTTPException, Query
 from sqlalchemy.orm import Session
-from sqlalchemy import or_
+from sqlalchemy import or_, and_
 from typing import List
 from datetime import datetime, timedelta
 from fastapi import Depends
@@ -18,23 +18,31 @@ def fetch_filtered_jobs(
 ):
     session: Session = SessionLocal()
     try:
+        # Categories are mandatory
+        if not categories:
+            raise HTTPException(status_code=400, detail="Categories parameter is required")
+        
         query = session.query(Job)
-
-        # Build OR conditions
-        or_conditions = []
-
+        
+        # First filter by categories (mandatory)
+        query = query.filter(Job.category.in_(categories))
+        
+        # If keywords are provided, add keyword filtering with AND condition
         if keywords:
+            keyword_conditions = []
             for kw in keywords:
                 kw = kw.strip()
                 if kw:
-                    or_conditions.append(Job.title.ilike(f"%{kw}%"))
-                    or_conditions.append(Job.description.ilike(f"%{kw}%"))
-
-        if categories:
-            or_conditions.append(Job.category.in_(categories))
-
-        if or_conditions:
-            query = query.filter(or_(*or_conditions))
+                    keyword_conditions.append(
+                        or_(
+                            Job.title.ilike(f"%{kw}%"),
+                            Job.description.ilike(f"%{kw}%")
+                        )
+                    )
+            
+            # Apply keyword conditions with AND logic
+            if keyword_conditions:
+                query = query.filter(and_(*keyword_conditions))
 
         # Limit to last 1 day
         one_day_ago = datetime.utcnow() - timedelta(days=1)
@@ -51,8 +59,8 @@ def fetch_filtered_jobs(
                 "published_at": job.published_at,
                 "category": job.category,
                 "type": job.type,
-                "description": job.description[:300],  # Limit description length
-                "skills": job.skills.split(",") if job.skills else [],
+                "description": job.description,  # Limit description length
+                "skills": job.skills.split(",") if job.skills is not None else [],
                 "location": job.location,
                 "budget": job.budget
 

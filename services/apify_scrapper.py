@@ -26,7 +26,7 @@ async def fetch_upwork_jobs_from_apify() -> List[Dict]:
                 logging.warning("[Crawler] No jobs found.")
                 return []
 
-            logging.info(f"[Crawler] Jobs data: {data}")
+            # logging.info(f"[Crawler] Jobs data: {data}")
 
             jobs = []
             for item in data:
@@ -34,7 +34,7 @@ async def fetch_upwork_jobs_from_apify() -> List[Dict]:
                     "title": item.get("title", ""),
                     "url": item.get("url", ""),
                     "type": item.get("type", ""),
-                    "description": item.get("description", "")[:300],
+                    "description": item.get("description", ""),
                     "category": item.get("category", {}).get("name") or "uncategorized",
                     "skills": [s.get("name", "") for s in item.get("skills") or []],
                     "budget": (

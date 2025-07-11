@@ -20,7 +20,7 @@ def save_jobs(jobs: list[dict]):
     session = SessionLocal()
     try:
         for job in jobs:
-            logging.info(f"[DB] Saving job: {job.get('title', 'No title')}")
+            # logging.info(f"[DB] Saving job: {job.get('title', 'No title')}")
 
             if not job.get("url") or not job.get("title"):
                 logging.warning("[DB] Skipping job with missing URL or title")
@@ -47,6 +47,7 @@ def save_jobs(jobs: list[dict]):
             )
             session.add(new_job)
 
+        logging.info(f"[DB] Saving {len(jobs)} jobs")
         session.commit()
     except Exception as e:
         logging.error(f"[DB] Error saving jobs: {e}")
@@ -60,7 +61,7 @@ def setup_database():
     JobAlert.metadata.create_all(engine)
     logging.info("[DB] Database setup complete")
 
-def get_latest_jobs(minutes=1000):
+def get_latest_jobs(minutes=10):
     session = SessionLocal()
     try:
         since = datetime.utcnow() - timedelta(minutes=minutes)
@@ -68,6 +69,7 @@ def get_latest_jobs(minutes=1000):
         return [
             {
                 "title": job.title,
+                "id": job.id,
                 "url": job.url,
                 "type": job.type,
                 "category": job.category,
@@ -88,8 +90,8 @@ def log_job_alert(user_id, job_id):
     session = SessionLocal()
     try:
         session.execute(
-            text("INSERT INTO job_alerts (user_id, job_id) VALUES (:user_id, :job_id)"),
-            {"user_id": user_id, "job_id": job_id}
+            text("INSERT INTO job_alerts (user_id, job_id, sent_at) VALUES (:user_id, :job_id, :sent_at)"),
+            {"user_id": user_id, "job_id": job_id, "sent_at": datetime.utcnow()}
         )
         session.commit()
     finally:
@@ -117,5 +119,21 @@ def alert_count_last_hour(user_id):
             {"user_id": user_id}
         ).scalar()
         return result
+    finally:
+        session.close()
+
+def get_all_alerts_for_users_and_jobs(user_ids, job_ids):
+    session = SessionLocal()
+    try:
+        if not user_ids or not job_ids:
+            return set()
+        result = session.execute(
+            text("""
+                SELECT user_id, job_id FROM job_alerts
+                WHERE user_id = ANY(ARRAY[:user_ids]::uuid[]) AND job_id = ANY(:job_ids)
+            """),
+            {"user_ids": user_ids, "job_ids": job_ids}
+        )
+        return set((row[0], row[1]) for row in result)
     finally:
         session.close()

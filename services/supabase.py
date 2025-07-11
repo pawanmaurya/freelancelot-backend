@@ -28,4 +28,8 @@ def get_users_with_filters_and_telegram():
             "telegram_id": user["telegram_id"],
             "filters": user_filters
         })
-    return result 
+    return result
+
+def update_user_telegram_id(user_id: str, chat_id: int):
+    response = supabase.table("profiles").update({"telegram_id": str(chat_id)}).eq("id", user_id).execute()
+    return response 

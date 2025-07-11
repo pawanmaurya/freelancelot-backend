@@ -9,6 +9,7 @@ from services.postgres import save_jobs, setup_database
 from fastapi.middleware.cors import CORSMiddleware
 from dotenv import load_dotenv
 import os
+from routers.telegram import router as telegram_router
 
 load_dotenv()
 
@@ -47,3 +48,4 @@ def startup_event():
 
 
 app.include_router(jobs.router, prefix="/api")
+app.include_router(telegram_router)
