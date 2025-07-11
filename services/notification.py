@@ -59,7 +59,7 @@ def send_telegram_alert(telegram_chat_id, jobs):
         else:
             skills_str = "N/A"
         desc = job.get('description', '')
-        desc_short = desc#[:200] + ("..." if len(desc) > 200 else "")
+        desc_short = desc[:200] + ("..." if len(desc) > 200 else "")
 
         # Calculate posted time
         now = datetime.utcnow()

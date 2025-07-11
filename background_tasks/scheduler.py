@@ -15,7 +15,7 @@ def notify_users_of_new_jobs():
     user_ids = [user['user_id'] for user in users]
     job_ids = [job['id'] for job in jobs]
     sent_alerts = get_all_alerts_for_users_and_jobs(user_ids, job_ids)  # returns set of (user_id, job_id)
-    logging.info(f"[Scheduler] Sent {sent_alerts} alerts")
+    # logging.info(f"[Scheduler] Sent {sent_alerts} alerts")
     sent_this_run = set()  # Track (user_id, job_id) sent in this run
     for job in jobs:
         for user in users:
@@ -38,14 +38,25 @@ def start_scheduler():
         if jobs:
             save_jobs(jobs)
             logging.info(f"[Scheduler] Fetched and saved {len(jobs)} jobs")
-            notify_users_of_new_jobs()
         else:
             logging.error("[Scheduler] No jobs fetched")
+
+    async def send_alerts_for_new_jobs():
+        notify_users_of_new_jobs()
+
 
     # Add job to run immediately and then every minute
     scheduler.add_job(
         run_crawler, 
-        trigger=IntervalTrigger(seconds=30),
+        trigger=IntervalTrigger(seconds=50),
         next_run_time=datetime.now()
     )
+
+    # Schedule alert sending
+    scheduler.add_job(
+        send_alerts_for_new_jobs,
+        trigger=IntervalTrigger(seconds=50),
+        next_run_time=datetime.now()
+    )
+
     scheduler.start()
