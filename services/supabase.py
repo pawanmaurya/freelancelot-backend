@@ -7,7 +7,13 @@ SUPABASE_KEY = os.getenv("SUPABASE_SERVICE_KEY")  # Use service key for backend
 supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
 
 def get_users_with_filters_and_telegram():
-    profiles = supabase.table("profiles").select("*").neq("telegram_id", None).execute().data
+    from datetime import datetime
+    now = datetime.utcnow().isoformat()
+    profiles = supabase.table("profiles") \
+        .select("*") \
+        .neq("telegram_id", None) \
+        .or_(f"is_paid.eq.true,trial_end.gte.{now}") \
+        .execute().data
     result = []
     for user in profiles:
         filters = supabase.table("filters").select("*").eq("user_id", user["id"]).execute().data
