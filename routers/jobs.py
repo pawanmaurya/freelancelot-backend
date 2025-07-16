@@ -48,7 +48,7 @@ def fetch_filtered_jobs(
         one_day_ago = datetime.utcnow() - timedelta(days=1)
         query = query.filter(Job.published_at >= one_day_ago)
 
-        matches = query.order_by(Job.published_at.desc()).limit(20).all()
+        matches = query.order_by(Job.published_at.desc()).all()
         total_matches = query.count()
 
         results = [
