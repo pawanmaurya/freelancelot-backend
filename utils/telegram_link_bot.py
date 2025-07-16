@@ -26,7 +26,7 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
             )
             logger.info(f"POST to BACKEND_LINK_ENDPOINT with user_token={user_token}, chat_id={chat_id}, status_code={resp.status_code}")
             if resp.status_code == 200:
-                await update.message.reply_text("✅ Your Telegram is now linked!")
+                await update.message.reply_text("✅ Your Telegram is now linked! Please create job filters on <a href='https://freelancelot.app/dashboard'>dashboard</a> to start recieving job alerts.")
                 logger.info(f"Sent success message to chat_id={chat_id}")
             elif resp.status_code == 404:
                 await update.message.reply_text("⚠️ User not found. Please signup first on <a href='https://freelancelot.app'>Freelancelot</a>.", parse_mode="HTML")

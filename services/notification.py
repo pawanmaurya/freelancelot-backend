@@ -84,7 +84,7 @@ def send_telegram_alert(telegram_chat_id, jobs):
             f"<b>Skills</b>\n{skills_str}\n\n"
             f"<b>About Client</b>\n🌍 {location} • 💸 Total spent: {client_spend} • ⭐ Rating: {client_rating} • 📅 Since: {published_str}\n"
             f"🕒 Posted {posted_str}\n\n"
-            f"<b>Description</b>\n<pre>{desc_short}</pre>\n\n"
+            f"<b>Description</b>\n<blockquote>{desc_short}</blockquote>\n\n"
         )
 
         reply_markup = {
