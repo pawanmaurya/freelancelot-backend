@@ -14,17 +14,46 @@ def match_jobs_to_filter(jobs, filter):
     categories = set([cat.lower() for cat in filter['categories']])
     min_price = filter.get('min_price')
     max_price = filter.get('max_price')
+    
+    # New filter attributes
+    client_locations = filter.get('client_locations', [])
+    exclude_locations = filter.get('exclude_locations', [])
+    min_client_rating = filter.get('min_client_rating')
+    job_types = filter.get('job_types', [])
 
     for job in jobs:
         job_text = (job['title'] + ' ' + job['description']).lower()
+        
+        # Keyword filtering
         if keywords and not any(kw in job_text for kw in keywords):
             continue
+            
+        # Category filtering
         if categories and job.get('category', '').lower() not in categories:
             continue
+            
+        # Price filtering
         if min_price is not None and job.get('budget', 0) < min_price:
             continue
         if max_price is not None and job.get('budget', 0) > max_price:
             continue
+            
+        # Client location filtering (include)
+        if client_locations and job.get('location') not in client_locations:
+            continue
+            
+        # Client location filtering (exclude)
+        if exclude_locations and job.get('location') in exclude_locations:
+            continue
+            
+        # Minimum client rating filtering
+        if min_client_rating is not None and job.get('client_rating', 0) < min_client_rating:
+            continue
+            
+        # Job type filtering
+        if job_types and job.get('type') not in job_types:
+            continue
+            
         matched.append(job)
     # logger.info(f"Matched {len(matched)} jobs for filter '{filter.get('name', '')}'")
     return matched
